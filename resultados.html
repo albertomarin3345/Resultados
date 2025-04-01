@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados</title>
+</head>
+
+<body>
+    <section>
+        <div class="logar">
+            <img style="border-radius: 12px;" src="IMG_0205.jpg" width="150px" height="150px" />
+        </div>
+    </section>
+    <section>
+        <h1>Resultados de la Búsqueda</h1>
+        <div id="results"></div>
+        <button onclick="clearResults()">Volver a buscar</button>
+    </section>
+
+    <script>
+        // Recuperar los resultados del almacenamiento local
+        const resultsDiv = document.getElementById('results');
+        const results = JSON.parse(localStorage.getItem('searchResults'));
+
+        if (results && results.length > 0) {
+            let html = '';
+            results.forEach(student => {
+                const rawUrl = student.constancia?.match(/=HIPERVINCULO\("([^"]+)"/i)?.[1] || student.constancia;
+                const downloadUrl = getGoogleDriveDownloadLink(rawUrl);
+
+                const pdfLink = downloadUrl
+                    ? `<a href="${downloadUrl}" class="pdf-link" target="_blank" download="Constancia_${student.alumno.replace(/\s+/g, '_')}.pdf">Descargar Constancia</a>`
+                    : 'N/A';
+
+                html += `
+                    <div class="student-card">
+                        <h3>${student.alumno}</h3>
+                        <p><strong>Escuela:</strong> ${student.escuela || 'N/A'}</p>
+                        <p><strong>Evento:</strong> ${student.evento || 'N/A'}</p> 
+                        <p><strong>Constancia:</strong> ${pdfLink}</p>
+                        <p><strong>Puntos:</strong> ${student.puntos || 'N/A'}</p>
+                        <p><strong>Estatus:</strong> ${student.status || 'N/A'}</p>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = '<p>No se encontraron resultados.</p>';
+        }
+
+        function getGoogleDriveDownloadLink(url) {
+            if (!url) return null;
+            if (url.includes("export=download")) return url;
+
+            if (url.includes("drive.google.com/file/d/")) {
+                const fileId = url.match(/\/file\/d\/([^\/]+)/)?.[1];
+                return fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : url;
+            }
+
+            return url;
+        }
+
+        function clearResults() {
+            // Limpiar el almacenamiento local y redirigir a la página de búsqueda
+            localStorage.removeItem('searchResults');
+            window.location.href = 'index.html'; // Cambia 'index.html' por el nombre de tu página de búsqueda
+        }
+    </script>
+</body>
+
+</html>
